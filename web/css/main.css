@@ -1,0 +1,30 @@
+#mainFrame{
+
+  width:75%;
+  height:80%;
+  border-style: solid;
+  border-width:thin;
+  margin:auto;
+  border-radius: 10px;
+
+}
+#mainFrame *{
+  border-style: inherit;
+  border-width: inherit;
+  padding:10px;
+  margin:20px;
+}
+
+#gameScreen {
+  width:70%;
+  height:65%;
+  float:left;
+}
+#userList{
+  width:16%;
+  height: 65%;
+  float:right;
+}
+#gameTitle{
+  text-align:center;
+}
