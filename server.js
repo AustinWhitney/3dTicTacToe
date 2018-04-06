@@ -3,7 +3,7 @@ var flash = require('express-flash');
 var session = require('express-session');
 var http = require('http');
 var qs = require('querystring');
-
+var path = require('path');
 var port = process.env.PORT || 8000;
 var app = express();
 var MongoClient = require('mongodb').MongoClient;
@@ -22,8 +22,12 @@ app.use(session({
   secret: "zordon",
   maxAge: 1000 * 60 * 10
 }));
-
-function removerUser(user){
+function printUsers(){
+  activeUsers.forEach(function(element){
+    console.log(`${element}`);
+  });
+}
+function removeUser(user){
   var index = activeUsers.indexOf(user);
   activeUsers.splice(index,1);
 }
@@ -112,21 +116,23 @@ app.post('/login',function(req,res){
 });
 
 app.get('/welcome',isLoggedIn,function(req,res){
-  var user = req.session.user;
-  var dash = user.username+ `<a href="/logout">LOGOUT</a>` ;
-  res.end(head+dash+foot);
+  var user = req.session.user.username;
+
   socket.on("connection",function(client){
    console.log('connected');
 
        activeUsers.push(user);
+        
        client.user = req.session.user;
        printUsers(activeUsers);
 
+       client.emit("userUpdate",{users:activeUsers});
        client.broadcast.emit("userUpdate",{
-       users:activeUsers
+         users:activeUsers
        });
-          client.on("disconnect",function(){
-          removeUser(client.user);
+
+       client.on("disconnect",function(){
+       removeUser(client.user);
 
        client.broadcast.emit("disconnect",{
         users:activeUsers
@@ -134,6 +140,7 @@ app.get('/welcome',isLoggedIn,function(req,res){
       });
 
   });
+  res.sendFile(path.join(__dirname+'/web/welcome.html'));
 });
 app.get('/logout',function(req,res){
   req.session.regenerate(function(err){

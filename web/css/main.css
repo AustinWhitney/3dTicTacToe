@@ -28,3 +28,11 @@
 #gameTitle{
   text-align:center;
 }
+ul{
+  list-style-type: none;
+  overflow: hidden;
+  overflow-y: scroll;
+}
+li{
+  border-left: none; 
+}

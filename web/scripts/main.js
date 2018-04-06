@@ -8,13 +8,14 @@ socket.on('connect',function(){
 
 
 socket.on('userUpdate',function(users){
+
   updateUserList(users);
 });
 
-function updateUserList(users){
+function updateUserList(data){
   $("#userList").empty();
-  users.forEach(function(data){
+  data.users.forEach(function(data){
 
-    $("#userList").append(`<li>${data.user}</li>`);
+    $("#userList").append(`<li>${data}</li>`);
   });
-}       });
+}
