@@ -8,12 +8,18 @@ var port = process.env.PORT || 8000;
 var app = express();
 var MongoClient = require('mongodb').MongoClient;
 var url = "mongodb://dooora:2233@ds119129.mlab.com:19129/a4";
-var server = http.createServer(app).listen(port);
+var server = http.createServer(app);
 var socket = require('socket.io')(server);
-console.log('Server hosted at port:'+port);
+
+
+
+
 
 //user list
 var activeUsers = [];
+var tempList=[];
+//user count;
+var userCount=0;
 app.use(flash());
 app.use('/', express.static('./web'));
 
@@ -117,29 +123,9 @@ app.post('/login',function(req,res){
 
 app.get('/welcome',isLoggedIn,function(req,res){
   var user = req.session.user.username;
-
-  socket.on("connection",function(client){
-   console.log('connected');
-
-       activeUsers.push(user);
-        
-       client.user = req.session.user;
-       printUsers(activeUsers);
-
-       client.emit("userUpdate",{users:activeUsers});
-       client.broadcast.emit("userUpdate",{
-         users:activeUsers
-       });
-
-       client.on("disconnect",function(){
-       removeUser(client.user);
-
-       client.broadcast.emit("disconnect",{
-        users:activeUsers
-       });
-      });
-
-  });
+  if(user!=null){
+    tempList.push(user);
+  }
   res.sendFile(path.join(__dirname+'/web/welcome.html'));
 });
 app.get('/logout',function(req,res){
@@ -192,4 +178,41 @@ app.post('/register',function(req,res){
 
         });
 });
+});
+socket.on("connection",function(client){
+  var user = tempList.pop();
+
+ console.log(user +' has connected');
+     var loggedIn = false;
+     client.on('firstConnect',function(){
+          if(loggedIn){
+            return;
+          }
+          socket.playerNum = -1;
+          activeUsers.push(user);
+          loggedIn = true;
+          client.user = user;
+          printUsers(activeUsers);
+          userCount++;
+          if(userCount<=2){
+            //determine if player 1 or 2
+            socket.playerNum = userCount;
+          }
+          client.emit("login",{users:activeUsers,playerNum:socket.playerNum});
+          client.broadcast.emit("userUpdate",{
+          users:activeUsers
+          });
+     });
+     client.on("disconnect",function(){
+       removeUser(client.user);
+       console.log(client.user+' has disconnected')
+          client.broadcast.emit("userLeave",{
+            users:activeUsers,
+            leaved:client.user
+          });
+    });
+
+});
+server.listen(port,function(){
+    console.log('Server hosted at port:'+port);
 });
